@@ -115,8 +115,8 @@ function decode(str){
 
 /**
 *	方法名：添加书签 
-*	@param string title 需要进行URI解码的字符串
-*	@return string r URI解码后的值
+*	@param string title 书签名称
+*	@return string url 书签指向的url，默认是当前页面地址。
 */
 function addBookmark(title,url){
 	var url = url ? url : location.href;
@@ -131,7 +131,6 @@ function addBookmark(title,url){
 		alert('请按Ctrl+D将'+title+'放入收藏夹!');
 	}
 }
-
 
 
 /** 
