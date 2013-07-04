@@ -9,8 +9,8 @@
 
 
 /**
-*	倒计时
-*	调用方法 var a=new countDown(1111,22222,2,funcName1,funcName2);
+*	方法名：倒计时
+*	用法: var a=new countDown(1111,22222,2,funcName1,funcName2);
 *	@param int startTime	倒计时开始的时间戳（单位是秒）
 *	@param int endTime		倒计时结束的时间戳（单位是秒）
 *	@param int step		倒计时间隔,默认是1（单位秒）
@@ -51,7 +51,7 @@ function countDown(startTime,endTime,step,processingCallback,endCallback) {
 
 
 /**
-*	获取url里面的参数
+*	方法名：获取url里面的参数
 *	@param string paramter	url参数字段名
 *	@param string url		需要截取参数的url，默认为当前页面的url
 *	@return string 			返回url中paramter对应的值
@@ -64,3 +64,112 @@ function getUrlParam(parameter, url) {
 	return (result==null) ? '' : url.substr(result.index+1).split("&")[0].split("=")[1];
 }
 
+
+/**
+*	方法名：设置cookie
+*	@param string name	cookie字段名
+*	@param string value	cookie值
+*	@param string domain cookie域名
+*	@param string expire cookie过期时间，不设置为会话cookie
+*/
+function setCookie(name,value,domain,expire){
+	var domain = domain ? domain : document.location.host;
+	if(expire){
+		var expireDate=new Date(new Date().getTime()+expire*1000);
+		document.cookie = name + "=" + escape(value) + "; path=/; domain="+domain+"; expires=" + expireDate.toGMTString() ;
+	}else{
+		document.cookie = name + "=" + escape(value) + "; path=/; domain="+domain;
+	}
+}
+
+
+/**
+*	方法名：获取cookie值
+*	@param string name	cookie字段名
+*	@return string cookie值
+*/
+function getCookie(name){
+	return this.decode((document.cookie.match(new RegExp("(^" + name + "| " + name + ")=([^;]*)")) == null) ? "" : RegExp.$2);
+}
+
+
+/**
+*	方法名：字符串URI解码
+*	@param string str 需要进行URI解码的字符串
+*	@return string r URI解码后的值
+*/
+function decode(str){
+	var r = '';
+	try{
+		r = decodeURIComponent(decodeURIComponent(str));	
+	}catch(e){
+		try {
+			r = decodeURIComponent(str);
+		}catch(e){
+			r = str;
+		}
+	}
+	return r;
+}
+
+
+/**
+*	方法名：添加书签 
+*	@param string title 需要进行URI解码的字符串
+*	@return string r URI解码后的值
+*/
+function addBookmark(title,url){
+	var url = url ? url : location.href;
+	var title = title ? title : document.title;
+	if (window.sidebar) {
+		window.sidebar.addPanel(title, url,"");
+	} else if( document.all ) {
+		window.external.AddFavorite( url, title);
+	} else if( window.opera && window.print ) {
+		return;
+	} else {
+		alert('请按Ctrl+D将'+title+'放入收藏夹!');
+	}
+}
+
+
+
+/** 
+*	方法名：利用JS原生方法加载js文件 
+*	@	param	url 		要进行加载的脚本文件地址
+*	@	param	charset 	指定加载脚本的编码类型，默认是utf-8
+*	@	param	callback	加载完成回调的方法,可选参数
+*/
+function getScript(url,charset,callback){
+
+	var noCache = '?t='+(new Date().getTime());
+	if(charset){
+		var pattern = new RegExp("utf8|UTF8|utf-8|UTF-8");
+		var charset = pattern.test(charset) ? 'utf-8': 'gbk';
+	}else{
+		var charset = 'utf-8';
+	}
+	
+	var scriptObj = document.createElement('script');
+	scriptObj.setAttribute('type','text/javascript');
+	scriptObj.setAttribute('charset',charset);	
+	scriptObj.setAttribute('src',url+noCache);
+	document.getElementsByTagName('head').item(0).appendChild(scriptObj);
+	
+	// IE 
+	if(scriptObj.readyState){
+		scriptObj.onreadystatechange = function(){
+			if (scriptObj.readyState == "loaded" || scriptObj.readyState == "complete"){
+				scriptObj.onreadystatechange = null;
+				if(typeof(callback)=='function'){
+					callback();
+				}
+			}
+		}
+	}else{
+		scriptObj.onload = function(){
+			if( typeof(callback)=='function' )
+				callback();
+		}
+	}
+}
