@@ -1,7 +1,7 @@
 /**
- * @package KHslider 基于jQuery
+ * @package KHslider 基于jQuery1.4+
  * @version 2.1
- * @uptate 2013-05-08
+ * @uptate 2013-07-04
  * @author keenhome	<keenhome@126.com>
  **/
 
@@ -23,9 +23,9 @@ var KHslider = (function($){
 			steps : 1,	// 每次滚动数
 			callback:null	// 切换后回调
 		},
-		allSettings={},	// 保存不同轮播图的配置
-		allTimers={},	//	保存不同轮播图的自动切换定时器
-		allRunningData={};	// 保存不同轮播图需要用到的变量
+		allSettings={},	// 保存不同轮播图的配置,用于实现多个实例  
+		allTimers={},	//	保存不同轮播图的自动切换定时器,用于实现多个实例 
+		allRunningData={};	// 保存不同轮播图需要用到的变量,用于实现多个实例 
 		
 	var prototype = {
 		init:function(settings){
@@ -39,8 +39,8 @@ var KHslider = (function($){
 			var thumbnailItems = $(settings.thumbnailContainer).find(settings.thumbnailItemSelector);	// 小导航对象集合
 			var lastindex = $(settings.thumbnailContainer).find(settings.thumbnailItemSelector).index($(settings.thumbnailContainer +' .'+settings.thumbnailOnStyle));	// 最后一次显示的序号，初始时与当前一致
 			var picsNum = $(settings.bigPicContainer).find(settings.bigPicItemSelector).length;	// 轮播数量
-			var slideWidth = settings.slideWidth ? settings.slideWidth : bigpicItems.eq(0).width();	// 滚动元素一次滚动的宽度
-			var slideHeight =  settings.slideHeight ? settings.slideHeight : bigpicItems.eq(0).height();	// 滚动元素一次滚动的高度
+			var slideWidth = settings.slideWidth ? settings.slideWidth : bigpicItems.eq(0).outerWidth(true);	// 滚动元素一次滚动的宽度
+			var slideHeight =  settings.slideHeight ? settings.slideHeight : bigpicItems.eq(0).outerHeight(true);	// 滚动元素一次滚动的高度
 			allRunningData[settings.id] = {
 				"bigpicItems" : bigpicItems,
 				"thumbnailItems" : thumbnailItems,
@@ -50,9 +50,12 @@ var KHslider = (function($){
 				"slideWidth" :slideWidth,
 				"slideHeight" : slideHeight
 			};
+			// 单次轮播数大于轮播项时不轮播 
 			if(allRunningData[settings.id].picsNum<=settings.steps ){
+				// 隐藏导航 
 				if(thumbnailItems.size()>0)
 					thumbnailItems.hide();
+				// 隐藏前一个/后一个按钮
 				var prveButtonObj = $(settings.prveButtonSelector);
 				if(prveButtonObj && prveButtonObj.size()>0){
 					prveButtonObj.hide();
@@ -104,16 +107,16 @@ var KHslider = (function($){
 				});
 			}
 
-			// 点击前一个
+			// 点击前一个 
 			var prveButtonObj = $(settings.prveButtonSelector);
 			if(prveButtonObj && prveButtonObj.size()>0){
 				prveButtonObj.unbind('click').click(function(){
-					// 清除自动切换
+					// 清除自动切换 
 					clearInterval(allTimers[id]);
 					allTimers[id] = setInterval(function(){
 						that.switchPic(id);
 					},settings.switchTime);
-					// 获取上一次显示的序号
+					// 获取上一次显示的序号 
 					runningData.lastindex = runningData.curindex;
 					runningData.thumbnailItems.eq(runningData.lastindex).removeClass(settings.thumbnailOnStyle);
 					runningData.curindex= runningData.lastindex >0 ? runningData.lastindex-1 : runningData.picsNum-1;
@@ -123,9 +126,9 @@ var KHslider = (function($){
 				});
 			}
 
-
+			// hover导航切换 
 			runningData.thumbnailItems.mouseover(function(){
-				// 清除自动切换
+				// 清除自动切换 
 				clearInterval(allTimers[id]);
 				// 获取上一次显示的序号
 				runningData.lastindex = $(settings.thumbnailContainer).find(settings.thumbnailItemSelector).index($(settings.thumbnailContainer +' .'+allSettings[id].thumbnailOnStyle));
@@ -133,11 +136,33 @@ var KHslider = (function($){
 				$(this).addClass(settings.thumbnailOnStyle);
 				runningData.curindex= runningData.thumbnailItems.index($(this));
 				that.show(id);
+
 			}).mouseout(function(){
 				allRunningData[id].lastindex = runningData.thumbnailItems.index($(settings.thumbnailContainer +' .'+settings.thumbnailOnStyle));
+				
 				allTimers[id] = setInterval(function(){
 					that.switchPic(id);
-				},settings.switchTime);
+					clearInterval(allTimers[id]);
+					allTimers[id] = setInterval(function(){
+						that.switchPic(id);
+					},settings.switchTime);
+				},250);
+			
+			});
+
+			// hover大图暂停 
+			runningData.bigpicItems.mouseover(function(){
+				// 清除自动切换
+				clearInterval(allTimers[id]);
+			}).mouseout(function(){
+				allRunningData[id].lastindex = runningData.thumbnailItems.index($(settings.thumbnailContainer +' .'+settings.thumbnailOnStyle));				
+				allTimers[id] = setInterval(function(){
+					that.switchPic(id);
+					clearInterval(allTimers[id]);
+					allTimers[id] = setInterval(function(){
+						that.switchPic(id);
+					},settings.switchTime);
+				},250);
 			
 			});
 		},
@@ -172,6 +197,7 @@ var KHslider = (function($){
 				bigpicItems.eq(allRunningData[id].lastindex).stop(true,true).fadeOut(function(){
 					bigpicItems.eq(curindex).fadeIn('slow');
 				});
+				
 			}
 			if(settings.callback){
 				settings.callback(curindex);
